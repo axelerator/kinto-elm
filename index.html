@@ -1,0 +1,82 @@
+<html>
+<head>
+ <script src="elm.js"></script>
+ </head>
+  <body>
+    <p>vor elm</p>
+    <div id="elm"></div>
+    <p>nach elm</p>
+    <h1>Tasks</h1>
+    <form class="form-inline" id="form">
+      <div class="form-group">
+        <input class="form-control" type="text" name="title" placeholder="Thing">
+        <input class="btn btn-primary" type="submit" value="Add">
+      </div>
+    </form>
+    <hr>
+    <ul id="tasks" class="list-group"></ul> 
+
+    <script src="//npmcdn.com/kinto@1.1.2/dist/kinto-1.1.2.js"></script>
+    <script type="text/javascript">
+      // Show the stamp module in the "elm-stamps" div.
+      var div = document.getElementById('elm');
+      var kinto = Elm.embed(Elm.Kinto, div, {});
+
+      kinto.ports.updateStorage.subscribe(databaseLookup);
+
+      function databaseLookup(data) {
+          console.log(data)
+          //myapp.ports.addUser.send(user, userInfo);
+      }
+
+      function main() {
+        var db = new Kinto();
+        var tasks = db.collection("tasks");
+        document.getElementById("form")
+          .addEventListener("submit", function(event) {
+            event.preventDefault();
+            tasks.create({
+              title: event.target.title.value,
+              done: false
+            })
+            .then(function(res) {
+              event.target.title.value = "";
+              event.target.title.focus();
+            })
+            .catch(function(err) {
+              console.error(err);
+            });
+          });
+
+        function renderTask(task) {
+          var li = document.createElement("li");
+          li.classList.add("list-group-item");
+          li.innerHTML = task.title;
+          return li;
+        }
+
+        function renderTasks(tasks) {
+          var ul = document.getElementById("tasks");
+          ul.innerHTML = "";
+          tasks.forEach(function(task) {
+            ul.appendChild(renderTask(task));
+          });
+        }
+
+        function render() {
+          tasks.list().then(function(res) {
+            renderTasks(res.data);
+          })
+          .catch(function(err) {
+            console.error(err);
+          });
+        }
+
+        render();
+      }
+      window.addEventListener("DOMContentLoaded", main);
+
+
+    </script>
+  </body>
+</html>
